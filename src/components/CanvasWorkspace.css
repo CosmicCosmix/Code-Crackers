@@ -1,0 +1,71 @@
+.workspace-viewport {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none; /* Prevent default touch actions for custom panning */
+}
+
+.workspace-viewport.roam {
+  cursor: grab;
+}
+.workspace-viewport.roam:active {
+  cursor: grabbing;
+}
+.workspace-viewport.brush {
+  cursor: crosshair;
+}
+
+.canvas-transform-layer {
+  position: relative;
+  display: inline-block;
+  transform-origin: center;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.bg-image {
+  display: block;
+  max-width: 100%;
+  max-height: 100vh;
+  object-fit: contain;
+  pointer-events: none; /* Let pointer events pass through to canvas container */
+  box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+}
+
+.mask-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* We handle events on viewport to calc coords */
+  z-index: 5;
+}
+
+.zoom-controls {
+  position: absolute;
+  bottom: 24px;
+  background: var(--color-card-bg);
+  padding: 8px 16px;
+  border-radius: var(--border-radius-pill);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0.5px solid var(--color-border);
+  z-index: 20;
+}
+
+.zoom-controls input {
+  width: 100px;
+}
+
+.zoom-controls span {
+  font-size: 0.85rem;
+  font-weight: 500;
+  min-width: 40px;
+}
