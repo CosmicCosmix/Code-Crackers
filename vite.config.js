@@ -6,10 +6,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api/replicate': {
-        target: 'https://api.replicate.com',
+      '/api/huggingface': {
+        target: 'https://router.huggingface.co',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/replicate/, '')
+        rewrite: (path) => path.replace(/^\/api\/huggingface/, '/hf-inference')
       }
     }
   }

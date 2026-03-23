@@ -1,24 +1,19 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getProjects, saveProjects, getReplicateKey, saveReplicateKey } from '../utils/storage';
+import { getProjects, saveProjects, getHfToken, saveHfToken } from '../utils/storage';
 
 const ProjectContext = createContext(null);
 
 export function ProjectProvider({ children }) {
   const [projects, setProjects] = useState([]);
-  const [replicateKey, setReplicateKey] = useState('');
+  const [hfToken, setHfToken] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       const projs = await getProjects();
-      let key = await getReplicateKey();
-      // Hardcode API key for prototype use as requested safely
-      if (!key) {
-        key = 'r8_VTJJDL5eR0lHIFhkOtR7tHlCCr3A4Uv2sE7CG';
-        await saveReplicateKey(key); // Save it so we don't ask again
-      }
+      let key = await getHfToken();
       setProjects(projs);
-      setReplicateKey(key);
+      setHfToken(key);
       setLoading(false);
     }
     loadData();
@@ -42,18 +37,18 @@ export function ProjectProvider({ children }) {
     await saveProjects(newProjects);
   };
 
-  const updateKey = async (key) => {
-    setReplicateKey(key);
-    await saveReplicateKey(key);
+  const updateToken = async (key) => {
+    setHfToken(key);
+    await saveHfToken(key);
   };
 
   const value = {
     projects,
-    replicateKey,
+    hfToken,
     addProject,
     updateProject,
     deleteProject,
-    updateKey,
+    updateToken,
   };
 
   if (loading) return null; // Or a loading spinner

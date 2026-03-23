@@ -20,14 +20,21 @@ export async function runInpaintingTask(replicateKey, currentImage, maskImage, p
 
 // Actually, Replicate recommended REST API format for models:
 export async function createPrediction(replicateKey, modelName, input) {
+  // Map model name to its latest version ID since /v1/models/.../predictions can sometimes correctly return 404 for certain plans/models.
+  const versions = {
+    "stability-ai/stable-diffusion-inpainting": "95b7223104132402a9ae91cc677285bc5eb997834bd2349fa486f53910fd68b3",
+    "stability-ai/stable-diffusion": "ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4"
+  };
+  const version = versions[modelName];
+
   // Try calling the Replicate API directly using Vite proxy
-  const response = await fetch(`/api/replicate/v1/models/${modelName}/predictions`, {
+  const response = await fetch(`/api/replicate/v1/predictions`, {
     method: "POST",
     headers: {
       "Authorization": `Token ${replicateKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ input })
+    body: JSON.stringify({ version, input })
   });
 
   if (!response.ok) {

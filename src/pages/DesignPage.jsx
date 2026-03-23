@@ -4,14 +4,14 @@ import { useProjects } from '../context/ProjectContext';
 import Toolbar from '../components/Toolbar';
 import FurniturePanel from '../components/FurniturePanel';
 import CanvasWorkspace from '../components/CanvasWorkspace';
-import { ReplicateKeyModal, PromptModal } from '../components/Modals';
-import { createPrediction, fetchImageAsBase64 } from '../utils/replicate';
+import { HfTokenModal, PromptModal } from '../components/Modals';
+import { createHfPrediction } from '../utils/huggingface';
 import './DesignPage.css';
 
 export default function DesignPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { projects, updateProject, replicateKey, updateKey } = useProjects();
+  const { projects, updateProject, hfToken, updateToken } = useProjects();
   const [project, setProject] = useState(null);
   
   // Editor State
@@ -74,7 +74,7 @@ export default function DesignPage() {
   };
 
   const ensureApiKey = () => {
-    if (!replicateKey) {
+    if (!hfToken) {
       setShowKeyModal(true);
       return false;
     }
@@ -93,13 +93,15 @@ export default function DesignPage() {
     setIsGenerating(true);
     setErrorMsg(null);
     try {
-      // NOTE: This uses the direct Replicate API. Some browsers might block this via CORS.
-      const url = await createPrediction(replicateKey, "stability-ai/stable-diffusion", {
-        image: currentSnapshot.imageDataURL,
-        prompt: `same room, walls painted in ${color}, photorealistic, interior design`,
-        prompt_strength: 0.45
+      const b64 = await createHfPrediction(hfToken, "runwayml/stable-diffusion-v1-5", {
+        inputs: `same room, walls painted in ${color}, photorealistic, interior design`,
+        // img2img parameters (HF usually accepts this pattern)
+        parameters: {
+          image: currentSnapshot.imageDataURL,
+          strength: 0.45
+        }
       });
-      const b64 = await fetchImageAsBase64(url);
+      // createHfPrediction already returns dataURL
       pushNewSnapshot(b64, 'Change Wall Color');
     } catch (e) {
       setErrorMsg(e.message);
@@ -116,14 +118,15 @@ export default function DesignPage() {
     setErrorMsg(null);
     try {
       const maskBase64 = workspaceRef.current.getMaskBase64();
-      const url = await createPrediction(replicateKey, "stability-ai/stable-diffusion-inpainting", {
-        image: currentSnapshot.imageDataURL,
-        mask: maskBase64,
-        prompt: prompt,
-        negative_prompt: "blurry, cartoon, distorted, low quality",
-        prompt_strength: 0.85
+      
+      const b64 = await createHfPrediction(hfToken, "runwayml/stable-diffusion-inpainting", {
+        inputs: prompt,
+        parameters: {
+          image: currentSnapshot.imageDataURL,
+          mask_image: maskBase64,
+          negative_prompt: "blurry, cartoon, distorted, low quality",
+        }
       });
-      const b64 = await fetchImageAsBase64(url);
       pushNewSnapshot(b64, 'Add Furniture');
       setClearTrigger(prev => prev + 1);
     } catch (e) {
@@ -243,10 +246,10 @@ export default function DesignPage() {
         }} />
       </div>
 
-      <ReplicateKeyModal 
+      <HfTokenModal 
         isOpen={showKeyModal} 
         onClose={() => setShowKeyModal(false)}
-        onSave={(k) => { updateKey(k); setShowKeyModal(false); }}
+        onSave={(k) => { updateToken(k); setShowKeyModal(false); }}
       />
 
       <PromptModal

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './Modal.css';
 
-export function ReplicateKeyModal({ isOpen, onClose, onSave }) {
+export function HfTokenModal({ isOpen, onClose, onSave }) {
   const [key, setKey] = useState('');
 
   if (!isOpen) return null;
@@ -9,20 +9,20 @@ export function ReplicateKeyModal({ isOpen, onClose, onSave }) {
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h3 style={{marginBottom: 8}}>Replicate API Key Required</h3>
+        <h3 style={{marginBottom: 8}}>Hugging Face Token Required</h3>
         <p style={{marginBottom: 16, fontSize: '0.9rem', color: '#666'}}>
-          Enter your Replicate API key to enable AI features. Get a free key at <a href="https://replicate.com" target="_blank" rel="noreferrer" style={{color: 'var(--color-accent)', textDecoration: 'underline'}}>replicate.com</a>.
+          Enter your Hugging Face Access Token to enable free AI features. Get a free token at <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noreferrer" style={{color: 'var(--color-accent)', textDecoration: 'underline'}}>huggingface.co</a>.
         </p>
         <input 
           type="password" 
           value={key} 
           onChange={e => setKey(e.target.value)} 
           className="modal-input"
-          placeholder="r8_..."
+          placeholder="hf_..."
         />
         <div className="modal-actions mt-16">
           <button className="btn" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={() => onSave(key)}>Save Key</button>
+          <button className="btn btn-primary" onClick={() => onSave(key)}>Save Token</button>
         </div>
       </div>
     </div>
