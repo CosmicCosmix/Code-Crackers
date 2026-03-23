@@ -13,7 +13,7 @@ export default function DesignPage() {
   const navigate = useNavigate();
   const { projects, updateProject, hfToken, updateToken } = useProjects();
   const [project, setProject] = useState(null);
-  
+
   // Editor State
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeTool, setActiveTool] = useState('roam');
@@ -29,7 +29,7 @@ export default function DesignPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [defaultPrompt, setDefaultPrompt] = useState('a piece of furniture, photorealistic, interior design, consistent room lighting');
-  
+
   // Ref to access workspace methods
   const workspaceRef = useRef(null);
 
@@ -89,13 +89,12 @@ export default function DesignPage() {
   const handleApplyWallColor = async (color) => {
     setWallColor(color);
     if (!ensureApiKey()) return;
-    
+
     setIsGenerating(true);
     setErrorMsg(null);
     try {
-      const b64 = await createHfPrediction(hfToken, "runwayml/stable-diffusion-v1-5", {
+      const b64 = await createHfPrediction(hfToken, "stabilityai/stable-diffusion-2-inpainting", {
         inputs: `same room, walls painted in ${color}, photorealistic, interior design`,
-        // img2img parameters (HF usually accepts this pattern)
         parameters: {
           image: currentSnapshot.imageDataURL,
           strength: 0.45
@@ -113,13 +112,12 @@ export default function DesignPage() {
   const handleGenerateFurniture = async (prompt) => {
     setShowPromptModal(false);
     if (!workspaceRef.current) return;
-    
+
     setIsGenerating(true);
     setErrorMsg(null);
     try {
       const maskBase64 = workspaceRef.current.getMaskBase64();
-      
-      const b64 = await createHfPrediction(hfToken, "runwayml/stable-diffusion-inpainting", {
+      const b64 = await createHfPrediction(hfToken, "kandinsky-community/kandinsky-2-2-decoder-inpaint", {
         inputs: prompt,
         parameters: {
           image: currentSnapshot.imageDataURL,
@@ -144,7 +142,7 @@ export default function DesignPage() {
       action,
       imageDataURL: b64
     });
-    
+
     const updated = { ...project, history: newHistory, wallColor };
     setProject(updated);
     setCurrentIndex(newHistory.length - 1);
@@ -156,10 +154,10 @@ export default function DesignPage() {
     <div className="design-page">
       {/* TOP BAR */}
       <header className="design-topbar hairline-b">
-        <input 
-          type="text" 
-          className="project-name-input" 
-          value={project.name} 
+        <input
+          type="text"
+          className="project-name-input"
+          value={project.name}
           onChange={handleNameChange}
           title="Rename project"
         />
@@ -168,19 +166,19 @@ export default function DesignPage() {
         </div>
         <div className="spacer flex-grow" />
         <div className="topbar-actions">
-          <button 
-            className="btn btn-icon" 
-            onClick={handleUndo} 
+          <button
+            className="btn btn-icon"
+            onClick={handleUndo}
             disabled={currentIndex === 0}
             title="Undo"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" /></svg>
           </button>
           <button className="btn" onClick={handleSave}>
             {showSaving ? 'Saved!' : 'Save'}
           </button>
           <button className="btn btn-primary" onClick={handleDownload}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: 6}}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>
             Download
           </button>
         </div>
@@ -190,9 +188,9 @@ export default function DesignPage() {
       <div className="design-workspace">
         {/* MAIN CANVAS AREA (Left) */}
         <div className="canvas-area">
-          <Toolbar 
-            activeTool={activeTool} 
-            setActiveTool={setActiveTool} 
+          <Toolbar
+            activeTool={activeTool}
+            setActiveTool={setActiveTool}
             brushSize={brushSize}
             setBrushSize={setBrushSize}
             onUndo={handleUndo}
@@ -201,9 +199,9 @@ export default function DesignPage() {
             setWallColor={handleApplyWallColor}
             onClearMask={() => setClearTrigger(prev => prev + 1)}
           />
-          
+
           <div className="canvas-container">
-            <CanvasWorkspace 
+            <CanvasWorkspace
               ref={workspaceRef}
               imageUrl={currentSnapshot.imageDataURL}
               activeTool={activeTool}
@@ -214,7 +212,7 @@ export default function DesignPage() {
             {hasMask && !isGenerating && (
               <div className="apply-ai-overlay">
                 <button className="btn btn-primary lg-btn shadow-btn" onClick={handleApplyAI}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: 8}}><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.21 1.21 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 8 }}><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.21 1.21 0 0 0 0-1.72Z" /><path d="m14 7 3 3" /><path d="M5 6v4" /><path d="M19 14v4" /><path d="M10 2v2" /><path d="M7 8H3" /><path d="M21 16h-4" /><path d="M11 3H9" /></svg>
                   Apply AI Furniture
                 </button>
               </div>
@@ -246,8 +244,8 @@ export default function DesignPage() {
         }} />
       </div>
 
-      <HfTokenModal 
-        isOpen={showKeyModal} 
+      <HfTokenModal
+        isOpen={showKeyModal}
         onClose={() => setShowKeyModal(false)}
         onSave={(k) => { updateToken(k); setShowKeyModal(false); }}
       />

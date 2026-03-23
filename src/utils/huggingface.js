@@ -1,36 +1,39 @@
-// Using Hugging Face Inference API for free prototyping
+import { HfInference } from '@huggingface/inference';
+
 export async function createHfPrediction(hfToken, modelName, input) {
-  // Try calling the Hugging Face API via Vite proxy
-  const response = await fetch(`/api/huggingface/models/${modelName}`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${hfToken}`,
-      "Content-Type": "application/json",
-      // Set to wait for model to load if cold
-      "x-use-cache": "false",
-      "x-wait-for-model": "true"
-    },
-    body: JSON.stringify(input)
-  });
+  // 1. Strip any accidental whitespace from the pasted token
+  const cleanToken = hfToken.trim();
 
-  if (!response.ok) {
-    const errText = await response.text();
-    let errMsg = errText;
-    try {
-      const errJson = JSON.parse(errText);
-      errMsg = errJson.error || errJson.detail || errText;
-    } catch(e) {}
-    throw new Error(errMsg || "Failed to start AI prediction");
+  // 2. Initialize the official client with the clean token
+  const hf = new HfInference(cleanToken);
+
+  // Convert URL to Blob
+  const imageResponse = await fetch(input.parameters.image);
+  const imageBlob = await imageResponse.blob();
+
+  try {
+    // 3. We removed `:fastest` - the SDK defaults to 'auto' provider selection safely
+    const resultBlob = await hf.imageToImage({
+      model: modelName,
+      inputs: imageBlob,
+      parameters: {
+        prompt: input.inputs,
+        negative_prompt: input.parameters?.negative_prompt,
+        ...(input.parameters?.mask_image && { mask_image: input.parameters.mask_image })
+      }
+    });
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(resultBlob);
+    });
+
+  } catch (err) {
+    console.error("Hugging Face API Error:", err);
+    throw new Error(err.message || "Failed to start AI prediction");
   }
-
-  // HF Inference API usually returns the image directly as a blob for vision models!
-  const blob = await response.blob();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
 }
 
 export async function fetchImageAsBase64(url) {
