@@ -148,7 +148,7 @@ function FurnitureMesh({ type, size, color }) {
 }
 
 // --- Interactive Draggable Wrapper ---
-function DraggableGroup({ item, isActive, activeId, setActiveId, updateItem, orbitControlsRef }) {
+function DraggableGroup({ item, isActive, setActiveId, updateItem, orbitControlsRef }) {
   const groupRef = useRef();
   const { camera, raycaster, pointer } = useThree();
   const [isDragging, setIsDragging] = useState(false);
@@ -197,8 +197,13 @@ function DraggableGroup({ item, isActive, activeId, setActiveId, updateItem, orb
       raycaster.ray.intersectPlane(plane, intersection);
       
       if (intersection) {
-        groupRef.current.position.x = intersection.x;
-        groupRef.current.position.z = intersection.z;
+        // Snap logic: Snap to nearest 0.5m grid
+        const snap = 0.5;
+        const snapX = Math.round(intersection.x / snap) * snap;
+        const snapZ = Math.round(intersection.z / snap) * snap;
+
+        groupRef.current.position.x = snapX;
+        groupRef.current.position.z = snapZ;
       }
     }
   };
@@ -216,15 +221,14 @@ function DraggableGroup({ item, isActive, activeId, setActiveId, updateItem, orb
       {isActive && (
         <mesh position={[0, -item.size[1]*0.48 + 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[item.size[0] + 0.2, item.size[2] + 0.2]} />
-          <meshBasicMaterial color="#D63B2F" transparent opacity={0.3} depthTest={false} side={THREE.DoubleSide} />
+          <meshBasicMaterial color="#000000" transparent opacity={0.10} depthTest={false} side={THREE.DoubleSide} />
         </mesh>
       )}
     </group>
   );
 }
 
-export default function Room3DWorkspace({ items, onUpdateItem }) {
-  const [activeId, setActiveId] = useState(null);
+export default function Room3DWorkspace({ items, onUpdateItem, activeId, setActiveId }) {
   const orbitRef = useRef();
 
   // Clear active ID if clicking empty space
@@ -233,7 +237,7 @@ export default function Room3DWorkspace({ items, onUpdateItem }) {
   };
 
   return (
-    <Canvas camera={{ position: [6, 6, 8], fov: 45 }} onPointerMissed={handleMissed} shadows>
+    <Canvas camera={{ position: [0, 15, 4], fov: 40 }} onPointerMissed={handleMissed} shadows>
       <ambientLight intensity={0.5} />
       <directionalLight 
         position={[10, 15, 10]} 
@@ -245,10 +249,10 @@ export default function Room3DWorkspace({ items, onUpdateItem }) {
       />
       
       {/* Floor Grid & Plane */}
-      <Grid args={[20, 20]} sectionColor={'#c0bcb2'} cellColor={'#e5e2da'} position={[0, -0.01, 0]} />
+      <Grid args={[20, 20]} sectionColor={'#D0D0D0'} cellColor={'#EAEAEA'} position={[0, -0.01, 0]} />
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} onPointerDown={(e) => { e.stopPropagation(); handleMissed(); }}>
         <planeGeometry args={[20, 20]} />
-        <meshStandardMaterial color="#F5F3EE" roughness={0.8} />
+        <meshStandardMaterial color="#FFFFFF" roughness={0.8} />
       </mesh>
 
       {/* Furniture Blocks */}
@@ -257,15 +261,14 @@ export default function Room3DWorkspace({ items, onUpdateItem }) {
           key={item.id} 
           item={item} 
           isActive={activeId === item.id} 
-          activeId={activeId}
           setActiveId={setActiveId} 
           updateItem={onUpdateItem} 
           orbitControlsRef={orbitRef}
         />
       ))}
 
-      {/* Orbital Camera Controls */}
-      <OrbitControls ref={orbitRef} makeDefault minPolarAngle={0} maxPolarAngle={Math.PI / 2 - 0.05} />
+      {/* Orbital Camera Controls - Bird's eye restriction */}
+      <OrbitControls ref={orbitRef} makeDefault minPolarAngle={0} maxPolarAngle={Math.PI / 3} minDistance={5} maxDistance={25} />
     </Canvas>
   );
 }

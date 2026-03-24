@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useProjects } from '../context/ProjectContext';
 import FurniturePanel from '../components/FurniturePanel';
 import Room3DWorkspace from '../components/Room3DWorkspace';
+import PropertiesPanel from '../components/PropertiesPanel';
 import './DesignPage.css';
 
 export default function DesignPage() {
@@ -13,6 +14,7 @@ export default function DesignPage() {
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showSaving, setShowSaving] = useState(false);
+  const [activeId, setActiveId] = useState(null);
 
   useEffect(() => {
     const proj = projects.find(p => p.id === id);
@@ -28,6 +30,7 @@ export default function DesignPage() {
   if (!project) return <div className="p-24">Loading project...</div>;
 
   const currentSnapshot = project.history[currentIndex] || { items: [] };
+  const activeItem = currentSnapshot.items?.find(it => it.id === activeId);
 
   const handleNameChange = async (e) => {
     const updated = { ...project, name: e.target.value };
@@ -111,12 +114,21 @@ export default function DesignPage() {
       </header>
 
       {/* WORKSPACE */}
-      <div className="design-workspace" style={{display: 'flex', flexGrow: 1, backgroundColor: '#f0ede6'}}>
-        {/* MAIN CANVAS AREA (Left) */}
+      <div className="design-workspace" style={{display: 'flex', flexGrow: 1, backgroundColor: 'var(--color-surface)', overflow: 'hidden', position: 'relative'}}>
+        {/* LEFT PANEL (Properties) */}
+        <PropertiesPanel 
+          item={activeItem} 
+          onChange={(updates) => handleUpdateItem(activeId, updates)}
+          onClose={() => setActiveId(null)}
+        />
+
+        {/* MAIN CANVAS AREA (Center) */}
         <div className="canvas-area" style={{ flexGrow: 1, position: 'relative' }}>
             <Room3DWorkspace 
               items={currentSnapshot.items || []}
               onUpdateItem={handleUpdateItem}
+              activeId={activeId}
+              setActiveId={setActiveId}
             />
         </div>
 
