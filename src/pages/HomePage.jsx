@@ -1,52 +1,42 @@
 import { useNavigate } from 'react-router-dom';
 import { useProjects } from '../context/ProjectContext';
+import { useState } from 'react';
 import './HomePage.css';
 
 const TEMPLATES = [
-  { id: 't1', name: 'Living Room', url: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=1200&q=80' },
-  { id: 't2', name: 'Bedroom', url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&q=80' },
-  { id: 't3', name: 'Kitchen', url: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=1200&q=80' },
-  { id: 't4', name: 'Bathroom', url: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=1200&q=80' },
-  { id: 't5', name: 'Home Office', url: 'https://images.unsplash.com/photo-1593642702821-c823b13eb295?w=1200&q=80' },
-  { id: 't6', name: 'Dining Room', url: 'https://images.unsplash.com/photo-1617806118233-18e1c0945594?w=1200&q=80' },
-  { id: 't7', name: 'Kids Room', url: 'https://images.unsplash.com/photo-1522771730849-f06b99d5dafc?w=1200&q=80' },
-  { id: 't8', name: 'Studio Apartment', url: 'https://images.unsplash.com/photo-1502672260266-1c1e52b1f417?w=1200&q=80' },
+  { id: 't1', name: 'Standard Room', items: [] },
+  { id: 't2', name: 'Living Room Setup', items: [
+    { id: 't-sofa', type: 'Sofa', size: [2, 0.8, 0.9], color: '#7a8c9b', position: [0, 0.4, -2], rotation: [0, 0, 0] },
+    { id: 't-table', type: 'Coffee Table', size: [1.2, 0.4, 0.7], color: '#8B5A2B', position: [0, 0.2, -0.5], rotation: [0, 0, 0] }
+  ]},
+  { id: 't3', name: 'Bedroom Setup', items: [
+    { id: 't-bed', type: 'Double Bed', size: [1.6, 0.5, 2.0], color: '#c7d9e8', position: [0, 0.25, -2], rotation: [0, 0, 0] }
+  ]},
+  { id: 't4', name: 'Office Setup', items: [
+    { id: 't-desk', type: 'Dining Table', size: [1.8, 0.75, 1.0], color: '#D2B48C', position: [0, 0.375, -2], rotation: [0, 0, 0] },
+    { id: 't-chair', type: 'Armchair', size: [0.9, 0.9, 0.9], color: '#d1b89d', position: [0, 0.45, -0.5], rotation: [0, 0, 0] }
+  ]}
 ];
 
 export default function HomePage() {
   const navigate = useNavigate();
   const { addProject } = useProjects();
+  const [loadingId, setLoadingId] = useState(null);
 
-  const handleTemplateClick = async (template) => {
-    try {
-      // Fetch image from Unsplash and convert to base64
-      const response = await fetch(template.url, { mode: 'cors' });
-      const blob = await response.blob();
-      const reader = new FileReader();
-      
-      reader.onloadend = async () => {
-        const base64data = reader.result;
-        const newProject = {
-          id: Date.now().toString(),
-          name: `My ${template.name}`,
-          createdAt: new Date().toISOString(),
-          wallColor: null,
-          history: [
-            {
-              timestamp: new Date().toISOString(),
-              action: 'Initial load',
-              imageDataURL: base64data
-            }
-          ]
-        };
-        await addProject(newProject);
-        navigate(`/design/${newProject.id}`);
-      };
-      reader.readAsDataURL(blob);
-    } catch (error) {
-      console.error("Error creating project from template", error);
-      alert("Failed to load template image. Please try again.");
-    }
+  const handleUseTemplate = async (template) => {
+    setLoadingId(template.id);
+    const newProject = {
+      id: Date.now().toString(),
+      name: template.name,
+      createdAt: new Date().toISOString(),
+      history: [{
+        timestamp: new Date().toISOString(),
+        action: 'Initial Template',
+        items: template.items
+      }]
+    };
+    await addProject(newProject);
+    navigate(`/design/${newProject.id}`);
   };
 
   return (
@@ -79,14 +69,18 @@ export default function HomePage() {
       <section className="templates-section">
         <h2>Templates</h2>
         <div className="templates-grid">
-          {TEMPLATES.map(template => (
-            <div key={template.id} className="template-card">
-              <div className="template-image-container">
-                <img src={template.url} alt={template.name} className="template-image" crossOrigin="anonymous" />
+          {TEMPLATES.map(tpl => (
+            <div 
+              key={tpl.id} 
+              className="template-card hairline hover-lift"
+              onClick={() => handleUseTemplate(tpl)}
+            >
+              <div className="template-img bg-cover" style={{ backgroundColor: '#e5e2da', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7a8c9b" strokeWidth="1"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
               </div>
               <div className="template-info">
-                <span className="template-name">{template.name}</span>
-                <button className="btn" onClick={() => handleTemplateClick(template)}>Open →</button>
+                <h4>{tpl.name}</h4>
+                {loadingId === tpl.id && <span className="loading-text">Creating 3D Room...</span>}
               </div>
             </div>
           ))}

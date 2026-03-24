@@ -1,19 +1,16 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getProjects, saveProjects, getHfToken, saveHfToken } from '../utils/storage';
+import { getProjects, saveProjects } from '../utils/storage';
 
 const ProjectContext = createContext(null);
 
 export function ProjectProvider({ children }) {
   const [projects, setProjects] = useState([]);
-  const [hfToken, setHfToken] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       const projs = await getProjects();
-      let key = await getHfToken();
       setProjects(projs);
-      setHfToken(key);
       setLoading(false);
     }
     loadData();
@@ -37,18 +34,11 @@ export function ProjectProvider({ children }) {
     await saveProjects(newProjects);
   };
 
-  const updateToken = async (key) => {
-    setHfToken(key);
-    await saveHfToken(key);
-  };
-
   const value = {
     projects,
-    hfToken,
     addProject,
     updateProject,
     deleteProject,
-    updateToken,
   };
 
   if (loading) return null; // Or a loading spinner

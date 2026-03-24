@@ -1,6 +1,5 @@
 export const STORAGE_KEYS = {
-  PROJECTS: 'cc_projects',
-  HF_TOKEN: 'cc_hf_token'
+  PROJECTS: 'cc_projects'
 };
 
 const MAX_HISTORY = 20;
@@ -45,19 +44,4 @@ export async function saveProjects(projects) {
   });
 }
 
-export async function getHfToken() {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(localStorage.getItem(STORAGE_KEYS.HF_TOKEN) || '');
-    }, 0);
-  });
-}
 
-export async function saveHfToken(key) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      localStorage.setItem(STORAGE_KEYS.HF_TOKEN, key);
-      resolve();
-    }, 0);
-  });
-}
